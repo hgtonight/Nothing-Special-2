@@ -1,0 +1,43 @@
+=================== FREESOUND ATTRIBUTION FORM =======================
+
+File:
+	Original Name: "k9dhhPulseEffect.wav"
+	Name as used: "paddle_collision.ogg"
+	Url: http://www.freesound.org/samplesViewSingle.php?id=3048
+	Date of upload: 2005-06-27 11:15:21
+	
+Designer / Creator / Uploader:
+	Name: "starpause"
+	Url: http://www.freesound.org/usersViewSingle.php?id=195
+	
+Description:
+	By "starpause" : A quick burst of mono, modulated square wave. It has low and high frequency
+components so I wouldn\'t use it to replace a kick or a snare, it works
+best for flair. Sculpted in LSDj on my GBA-SP. 
+
+Tags:
+	chip chiptune coin gameboy lobit lofi lsdj noise noise-channel pulse-channel square-wave video-game 
+======================================================================
+
+File:
+	Original Name: "k9dhhPulseKick.wav"
+	Name as used: "wall_collision.ogg"
+	Url: http://www.freesound.org/samplesViewSingle.php?id=3049
+	Date of upload: 2005-06-27 11:16:25
+	
+Designer / Creator / Uploader:
+	Name: "starpause"
+	Url: http://www.freesound.org/usersViewSingle.php?id=195
+	
+Description:
+	By "starpause" : A decaying, square wave, mono kick drum. The square wave is modulated so this is not a max-volume super flat/square kick.  A gabber bass drum with a little LSDj pulse channel flavor! Recorded from a GBA-SP. Mono!
+
+Tags:
+	bass-drum chip gabber gameboy kick lobit lofi low-fi lsdj noise noise-channel square-wave video-game 
+======================================================================
+
+== License ==
+
+These works are licensed under the Creative Commons Sampling Plus 1.0 License. To view a copy of this license, visit http://creativecommons.org/licenses/sampling+/1.0/ or send a letter to Creative Commons, 543 Howard Street, 5th Floor, San Francisco, California, 94105, USA.
+
+=============

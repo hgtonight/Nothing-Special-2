@@ -1,0 +1,5 @@
+All assets are licensed under GPL 3.0, except as noted below.
+
+fonts/Geo-Regular.ttf was designed by Ben Weiner and is licensed under the SIL Open Font License 1.1 (see silofl.txt for full text)
+sounds/music-tech.ogg was created by brandon75689 from opengameart.org and is licensed under Creative Commons Attribution 3.0 license (see license_music.txt for full details)
+sounds/wall_collision.ogg and sounds/paddle_collision.ogg were created by starpause from freesound.org and is licensed under the Creative Commons Sampling Plus License (see license_sfx.txt for full details)
