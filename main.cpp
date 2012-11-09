@@ -7,6 +7,7 @@
 #include <allegro5/allegro_ttf.h>
 #include <allegro5/allegro_audio.h>
 #include <allegro5/allegro_acodec.h>
+#include "singleton.h"
 using namespace std;
 
 const float FPS = 60;
@@ -32,8 +33,6 @@ int main(int argc, char **argv)
     ALLEGRO_TIMER *timer = NULL;
     ALLEGRO_BITMAP *logo = NULL;
     ALLEGRO_BITMAP *title = NULL;
-    ALLEGRO_BITMAP *ball = NULL;
-    ALLEGRO_BITMAP *paddle = NULL;
     ALLEGRO_FONT *smallfont = NULL;
     ALLEGRO_FONT *medfont = NULL;
     ALLEGRO_FONT *hugefont = NULL;
@@ -51,17 +50,13 @@ int main(int argc, char **argv)
     int tick = 0;
     int menu = 1;
     int high_score = 0;
-    float paddle_x = SCREEN_W / 2.0;
-    float paddle_y = SCREEN_H - 32.0;
     bool restart = true;
-    int score, multi, final_score, paddle_tick;
-    float ball_x, ball_y, ball_dx, ball_dy, ball_v, ball_theta, new_x, new_y;
+    int score = 0, multi = 1, final_score = 1;
     bool game_over, redraw;
     char scoretxt[8] = "";
     char multitxt[4] = "";
     char final_scoretxt[16] = "";
     char hightxt[16] = "";
-    float ball_deg = 0, ball_xpos = 0;
 
     // initialize allegro
     if(!al_init()) {
@@ -144,24 +139,17 @@ int main(int argc, char **argv)
     // create and confirm title, ball, and paddle bitmaps
     logo = al_load_bitmap("assets/images/daklutz.png");
     title = al_load_bitmap("assets/images/title.png");
-    ball = al_create_bitmap(BALL_SIZE, BALL_SIZE);
-    paddle = al_create_bitmap(PADDLE_SIZE, 8);
-    if(!ball || !paddle || !title || !logo) {
-        fprintf(stderr, "Failed to create bitmaps!\n");
+    if(!title || !logo) {
+        fprintf(stderr, "Failed to load image files!\n");
         al_destroy_display(display);
         al_destroy_timer(timer);
         return -1;
     }
-
-    // color the ball and paddle
-    al_set_target_bitmap(ball);
-    al_clear_to_color(al_map_rgb(255, 0, 0));
-    al_set_target_bitmap(paddle);
-    al_clear_to_color(al_map_rgb(0, 0, 255));
-    // Switch to the backbuffer
+	if(debug) { fprintf(stderr, "Bitmaps loaded.\n"); }
+    
+	// Make sure we are on the backbuffer
     al_set_target_bitmap(al_get_backbuffer(display));
-    if(debug) { fprintf(stderr, "Bitmaps loaded.\n"); }
-
+    
     voice = al_create_voice(44100, ALLEGRO_AUDIO_DEPTH_INT16, ALLEGRO_CHANNEL_CONF_2);
     if (!voice) {
         fprintf(stderr, "Could not create ALLEGRO_VOICE.\n");
@@ -224,8 +212,7 @@ int main(int argc, char **argv)
     if(!event_queue) {
         fprintf(stderr, "Failed to create event_queue!\n");
         al_destroy_bitmap(title);
-        al_destroy_bitmap(ball);
-        al_destroy_bitmap(paddle);
+        al_destroy_bitmap(logo);
         al_destroy_display(display);
         al_destroy_timer(timer);
         return -1;
@@ -236,22 +223,6 @@ int main(int argc, char **argv)
     al_register_event_source(event_queue, al_get_timer_event_source(timer));
     al_register_event_source(event_queue, al_get_mouse_event_source());
     al_register_event_source(event_queue, al_get_keyboard_event_source());
-
-    // load hiscore info
-    scoref = al_fopen("assets/hiscore.txt", "r");
-    if(scoref) {
-        char *line = (char*) malloc (17);
-        line = al_fgets(scoref, line, 17);
-        high_score = atoi(line);
-        free(line);
-    }
-    else {
-        high_score = 0;
-    }
-	final_score = 0;
-
-    sprintf(hightxt, "High: %d", high_score);
-    al_fclose(scoref);
 
     // blank the display
     al_clear_to_color(al_map_rgb(0,0,0));
@@ -267,19 +238,19 @@ int main(int argc, char **argv)
 
         if(ev.type == ALLEGRO_EVENT_TIMER) {
             // trigger redraw
-            ball_deg++;
-            if(ball_deg < 180) {
-                colr = colg = colb = (0.5 * sin( (ball_deg - 90) * ALLEGRO_PI / 180.0) + 0.5);
+            tick++;
+            if(tick < 180) {
+                colr = colg = colb = (0.5 * sin( (tick - 90) * ALLEGRO_PI / 180.0) + 0.5);
                 alpha = 0;
             }
-            else if(ball_deg < 360) {
-                alpha = (0.5 * sin( (ball_deg + 90) * ALLEGRO_PI / 180.0) + 0.5);
+            else if(tick < 360) {
+                alpha = (0.5 * sin( (tick + 90) * ALLEGRO_PI / 180.0) + 0.5);
                 colr = colg = colb = 1;
             }
-            else if(ball_deg > 450 && ball_deg < 630) {
-                colr = colg = colb = alpha = (0.5 * cos( (ball_deg - 90) * ALLEGRO_PI / 180.0) + 0.5);
+            else if(tick > 450 && tick < 630) {
+                colr = colg = colb = alpha = (0.5 * cos( (tick - 90) * ALLEGRO_PI / 180.0) + 0.5);
             }
-            else if(ball_deg > 632) {
+            else if(tick > 632) {
                 break;
             }
             redraw = true;
@@ -301,6 +272,22 @@ int main(int argc, char **argv)
 
     al_flip_display();
     al_clear_to_color(al_map_rgb(0,0,0));
+
+	// load hiscore info
+    scoref = al_fopen("assets/hiscore.txt", "r");
+    if(scoref) {
+        char *line = (char*) malloc (17);
+        line = al_fgets(scoref, line, 17);
+        high_score = atoi(line);
+        free(line);
+    }
+    else {
+        high_score = 0;
+    }
+	final_score = 0;
+
+    sprintf(hightxt, "High: %d", high_score);
+    al_fclose(scoref);
 
     // main menu loop
     while (1) {
@@ -358,7 +345,7 @@ int main(int argc, char **argv)
 
 			// set title
 			// set base speed
-			// create block entities
+			// create list of block entities
 				
 		// save high score if the final score is higher
         if(final_score > high_score) {
@@ -375,7 +362,6 @@ int main(int argc, char **argv)
         
 		// reset physics
 		game_over = false;
-        paddle_tick = 0;
 
         // main game loop
         while(1) {
@@ -385,105 +371,64 @@ int main(int argc, char **argv)
             if(ev.type == ALLEGRO_EVENT_TIMER) {
                 // game logic loop
                 if(!game_over) {
-					// calculate each ball's new by checking for...
+					// calculate each ball's new position by checking for...
 
 						// paddle collision
-						if( (ball_x + ball_dx > paddle_x - BALL_SIZE) && (ball_x + ball_dx < paddle_x + PADDLE_SIZE) && (ball_y + ball_dy > SCREEN_H - 40) ) {
-							paddle_tick = 1;
-							al_play_sample(paddlehit, .75, 0, 1, ALLEGRO_PLAYMODE_ONCE, NULL);
-							// it has definitely collided, lets change the angle based on
-							// position of ball to paddle
-							// speed up ball
-							ball_v = sqrt(ball_dx * ball_dx + ball_dy * ball_dy) * 1.05;
-							ball_xpos = ball_x + ball_dx - paddle_x + BALL_SIZE;
-							ball_deg = (1.5 * (ball_xpos) - 60);
-							ball_theta = ball_deg * ALLEGRO_PI / 180.0;
-							ball_dy = -(cos(ball_theta) * ball_v);// + (SCREEN_H - 40 - BALL_SIZE);
-							ball_dx = (sin(ball_theta) * ball_v);// + ball_x + ball_dx;
-							new_y = SCREEN_H - 41 - BALL_SIZE;
-							new_x = ball_x + ball_dx;
-							// reward accurate hit with multiplier increase
-							if(ball_xpos > 31 && ball_xpos < 65) {
-								multi++;
-							}
-						}
-
+						
 						// block collision
 							// reflect and damage block
 
-						// ball loss
-						if(ball_y + ball_dy > SCREEN_H - 40) {
-							// game over
-							game_over = true;
-							final_score = score * multi;
-							al_show_mouse_cursor(display);
-						}
-						else {
-							score++;
-						}
+						// decide if ball is lost
+	
+						// move that ball
+
+					// make sure at least one ball is in play
+						// increment score
+					score += multi;
+					// else game over
                     
-					// update ball position taking into account wall collisions
-                    new_y = ball_y + ball_dy;
-                    new_x = ball_x + ball_dx;
                 }
                 else {
-                    // end game animation
-                    tick++;
-                    if(tick%2) {
-                        ball_deg++;
-                        if(ball_deg > 360) {
-                            ball_deg = 0;
-                        }
-                        colr = (0.5 * sin(ball_deg * ALLEGRO_PI / 180.0) + 0.5);
-                        colg = (0.5 * cos(ball_deg * ALLEGRO_PI / 180.0) + 0.5);
-                        colb = (0.5 * sin( (ball_deg + 180) * ALLEGRO_PI / 180.0) + 0.5);
-                    }
+                    // end game animation logic
                 }
 
-                // move that ball
-                ball_x = new_x;
-                ball_y = new_y;
-                redraw = true;
+                // trigger a render every tick
+				redraw = true;
             }
             else if(ev.type == ALLEGRO_EVENT_DISPLAY_CLOSE) {
                 break;
             }
             else if(ev.type == ALLEGRO_EVENT_MOUSE_AXES || ev.type == ALLEGRO_EVENT_MOUSE_ENTER_DISPLAY) {
                 if(!game_over) {
-                    // make the paddle follow the mouse but clip at the edge of the window
-                    if(ev.mouse.x < (PADDLE_SIZE / 2) ) {
-                        paddle_x = 0;
-                    }
-                    else if(ev.mouse.x > SCREEN_W - (PADDLE_SIZE / 2) ) {
-                        paddle_x = SCREEN_W - PADDLE_SIZE;
-                    }
-                    else {
-                        paddle_x = ev.mouse.x - (PADDLE_SIZE / 2);
-                    }
+                    // update each paddle
+						// horizontal clip
+							/*if(ev.mouse.x < (PADDLE_SIZE / 2) ) {
+								paddle_x = 0;
+							}
+							else if(ev.mouse.x > SCREEN_W - (PADDLE_SIZE / 2) ) {
+								paddle_x = SCREEN_W - PADDLE_SIZE;
+							}
+							else {
+								paddle_x = ev.mouse.x - (PADDLE_SIZE / 2);
+							}*/
+						// vertical clip
+							/*if(ev.mouse.y < (PADDLE_SIZE / 2) ) {
+								paddle_y = 0;
+							}
+							else if(ev.mouse.y > SCREEN_H - (PADDLE_SIZE / 2) ) {
+								paddle_y = SCREEN_H - PADDLE_SIZE;
+							}
+							else {
+								paddle_y = ev.mouse.y - (PADDLE_SIZE / 2);
+							}*/
                 }
                 else {
-                    // retry menu logic
-                    if(ev.mouse.y < 360) {
-                        menu = 1;
-                    }
-                    else {
-                        menu = 0;
-                    }
+                    // track mouse movement for retry menu logic
                 }
             }
             else if(ev.type == ALLEGRO_EVENT_MOUSE_BUTTON_UP) {
-                // retry menu input is only acceptable in game over state
                 if(game_over) {
-                    if(menu == 1) {
-                        // reset logic
-                        restart = true;
-                        game_over = false;
-                        break;
-                    }
-                    else {
-                        // exit game
-                        break;
-                    }
+                    // track mouse clicks for retry menu logic
                 }
             }
             else if(ev.type == ALLEGRO_EVENT_KEY_DOWN) {
@@ -492,8 +437,7 @@ int main(int argc, char **argv)
                     case ALLEGRO_KEY_ESCAPE:
                         key[KEY_ESC] = true;
                         break;
-
-                    case ALLEGRO_KEY_SPACE:
+					case ALLEGRO_KEY_SPACE:
                         key[KEY_SPACE] = true;
                         break;
                 }
@@ -504,8 +448,7 @@ int main(int argc, char **argv)
                     case ALLEGRO_KEY_ESCAPE:
                         key[KEY_ESC] = false;
                         break;
-
-                    case ALLEGRO_KEY_SPACE:
+					case ALLEGRO_KEY_SPACE:
                         key[KEY_SPACE] = false;
                         break;
                 }
@@ -515,15 +458,19 @@ int main(int argc, char **argv)
                 //The render loop
                 redraw = false;
                 if(!game_over) {
+					// game play
                     // blank
                     al_clear_to_color(al_map_rgb(128,128,128));
-                    // prep strings for HUD
-                    sprintf (multitxt, "%3d", multi);
-                    sprintf (scoretxt, "%07d", score);
+                    
+					// render each ball
 
-                    // ball, paddle, then HUD
-                    al_draw_bitmap(ball, ball_x, ball_y, 0);
-                    al_draw_bitmap(paddle, paddle_x, paddle_y, 0);
+					// render each paddle
+
+					// render each block
+
+					// render HUD
+					sprintf (scoretxt, "%d", score);
+					sprintf (multitxt, "%d", multi);
                     al_draw_text(medfont, al_map_rgb(0,0,0), 8, 8, ALLEGRO_ALIGN_LEFT, "Score");
                     al_draw_text(medfont, al_map_rgb(255,255,255), 128, 8, ALLEGRO_ALIGN_LEFT, scoretxt);
                     al_draw_text(medfont, al_map_rgb(0,0,0), 300, 8, ALLEGRO_ALIGN_LEFT, "x");
@@ -531,20 +478,8 @@ int main(int argc, char **argv)
                     al_draw_text(medfont, al_map_rgb(0,0,0), 424, 8, ALLEGRO_ALIGN_LEFT, hightxt);
                 }
                 else {
+					// render retry menu
                     al_clear_to_color(al_map_rgb(128,128,128));
-                    // game over animations
-                    al_draw_bitmap(paddle, paddle_x, paddle_y, 0);
-                    sprintf (final_scoretxt, "%d", final_score);
-                    al_draw_text(hugefont, al_map_rgb(0,0,0), SCREEN_W / 2, SCREEN_H / 4, ALLEGRO_ALIGN_CENTRE, "Final Score");
-                    al_draw_text(hugefont, al_map_rgb_f(colr,colg,colb), SCREEN_W / 2, SCREEN_H / 4 + 84, ALLEGRO_ALIGN_CENTRE, final_scoretxt);
-                    if(menu == 1) {
-                        al_draw_text(medfont, al_map_rgb(196,0,0), SCREEN_W / 2, 300, ALLEGRO_ALIGN_CENTRE, "Start Over");
-                        al_draw_text(smallfont, al_map_rgb(64,64,64), SCREEN_W / 2, 360, ALLEGRO_ALIGN_CENTRE, "Exit");
-                    }
-                    else {
-                        al_draw_text(medfont, al_map_rgb(64,64,64), SCREEN_W / 2, 300, ALLEGRO_ALIGN_CENTRE, "Start Over");
-                        al_draw_text(smallfont, al_map_rgb(196,0,0), SCREEN_W / 2, 360, ALLEGRO_ALIGN_CENTRE, "Exit");
-                    }
                 }
                 // always flip display
                 al_flip_display();
@@ -565,8 +500,7 @@ int main(int argc, char **argv)
 
 	// proper cleanup is important!
     al_destroy_bitmap(title);
-    al_destroy_bitmap(ball);
-    al_destroy_bitmap(paddle);
+    al_destroy_bitmap(logo);
     al_destroy_timer(timer);
     al_destroy_display(display);
     al_destroy_event_queue(event_queue);
