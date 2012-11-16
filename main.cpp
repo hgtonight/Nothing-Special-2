@@ -1,12 +1,14 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cmath>
+#include <vector>
 #include <allegro5/allegro.h>
 #include <allegro5/allegro_image.h>
 #include <allegro5/allegro_font.h>
 #include <allegro5/allegro_ttf.h>
 #include <allegro5/allegro_audio.h>
 #include <allegro5/allegro_acodec.h>
+#include <allegro5/allegro_primitives.h>
 #include "singleton.h"
 using namespace std;
 
@@ -57,6 +59,10 @@ int main(int argc, char **argv)
     char multitxt[4] = "";
     char final_scoretxt[16] = "";
     char hightxt[16] = "";
+	std::vector<Brick> Bricks;
+	std::vector<Ball> Balls;
+	std::vector<Paddle> Paddles;
+	float DeltaX = 0, DeltaY = 0;
 
     // initialize allegro
     if(!al_init()) {
@@ -94,9 +100,16 @@ int main(int argc, char **argv)
     }
     if(debug) { fprintf(stderr, "Image loading initialized.\n"); }
 
+	// initialize true type fonts
+    if(!al_init_primitives_addon()) {
+        fprintf(stderr, "Failed to initialize primitives!\n");
+        return -1;
+    }
+    if(debug) { fprintf(stderr, "Primitives addon initialized.\n"); }
+
     // initialize bitmap fonts
     al_init_font_addon();
-
+	
     // initialize true type fonts
     if(!al_init_ttf_addon()) {
         fprintf(stderr, "Failed to initialize TrueType!\n");
@@ -336,17 +349,28 @@ int main(int argc, char **argv)
     // game wrapper lets us restart the game
     while(restart) {
 		// hide the cursor
-        al_hide_mouse_cursor(display);
+        //al_hide_mouse_cursor(display);
 
 		// assume we don't want to play again
         restart = false;
 
-        // load the right map
+        // TODO: load the right map
 
 			// set title
 			// set base speed
 			// create list of block entities
-				
+		
+		// Remove static data when we get map loading done
+		
+		for(int i=0; i < 64; i++) {
+			Brick SingleBlockyEntity = Brick((i % 16) * 40, 80 + ( (i / 16) * 10), i % 8);
+			Bricks.push_back(SingleBlockyEntity);
+		}
+
+		// Start with 1 ball
+		Ball StarterBall = Ball();
+		Balls.push_back(StarterBall);
+
 		// save high score if the final score is higher
         if(final_score > high_score) {
             high_score = final_score;
@@ -371,27 +395,45 @@ int main(int argc, char **argv)
             if(ev.type == ALLEGRO_EVENT_TIMER) {
                 // game logic loop
                 if(!game_over) {
-					// calculate each ball's new position by checking for...
+					// calculate each ball's new position and check for...
+					for(int i = 0; i < Balls.size(); i++) {
+						// Unencumbered position change
+						DeltaX = cos(Balls[i].Theta) * Balls[i].Speed;
+						DeltaY = sin(Balls[i].Theta) * Balls[i].Speed;
+
+						// See if the new position would collide with any other entity
 
 						// paddle collision
-						
-						// block collision
-							// reflect and damage block
-
-						// decide if ball is lost
-	
+											
+						// brick collision
+						for(int j = 0; j < Bricks.size(); j++) {
+							if(Balls[i].Collides(Bricks[j].PositionX, Bricks[j].PositionY, Bricks[j].PositionX + Bricks[j].Width, Bricks[j].PositionY + Bricks[j].Height) ) {
+								// reflect and damage block
+								Bricks[j].Harm();
+							}
+						}
 						// move that ball
+						Balls[i].PositionX += DeltaX;
+						Balls[i].PositionY += DeltaY;
+						
+						// decide if ball is lost
+						// ball is lost if it somehow gets off the screen
+						if(Balls[i].PositionX >= 0 && Balls[i].PositionX + Balls[i].Width <= SCREEN_W && Balls[i].PositionY >= 0 && Balls[i].PositionY + Balls[i].Height <= SCREEN_W) {
+							Balls[i].Live = false;
+						}
+						else {
+							score += multi;
+						}
+					}
 
 					// make sure at least one ball is in play
-						// increment score
-					score += multi;
-					// else game over
-                    
+					if(Balls[0].BallCount < 1) {
+						game_over = true;
+					}
                 }
                 else {
                     // end game animation logic
                 }
-
                 // trigger a render every tick
 				redraw = true;
             }
@@ -430,6 +472,10 @@ int main(int argc, char **argv)
                 if(game_over) {
                     // track mouse clicks for retry menu logic
                 }
+				else {
+					// debug
+					// add a ball at the current mouse position
+				}
             }
             else if(ev.type == ALLEGRO_EVENT_KEY_DOWN) {
                 // set keys we are interested in if pressed
@@ -462,11 +508,24 @@ int main(int argc, char **argv)
                     // blank
                     al_clear_to_color(al_map_rgb(128,128,128));
                     
+					// render each brick
+					for(int i = 0; i < Bricks.size(); i++)
+					{
+						Bricks[i].Render();
+					}
+
 					// render each ball
+					for(int i = 0; i < Balls.size(); i++)
+					{
+						Balls[i].Render();
+					}
 
 					// render each paddle
-
-					// render each block
+					for(int i = 0; i < Paddles.size(); i++)
+					{
+						Paddles[i].Render();
+					}
+					
 
 					// render HUD
 					sprintf (scoretxt, "%d", score);

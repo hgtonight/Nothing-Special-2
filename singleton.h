@@ -3,6 +3,7 @@
 
 class BlockyEntity {
 protected:
+public:
 	int PositionX, PositionY, Width, Height;
 	ALLEGRO_COLOR Color;
 	bool Live;
@@ -16,13 +17,15 @@ protected:
 	bool Collides(int x, int y, int r);
 	bool Collides(int x1, int y1, int x2, int y2);
 	bool IsAlive();
+	void SetPosition(int x, int y);
+	void SetDimensions(int w, int h);
 };
 
 class Brick : public BlockyEntity {
 private:
-	static int BrickCount;
 	int Strength;
 public:
+	static int BrickCount;
 	Brick();
 	Brick(int x, int y);
 	Brick(int x, int y, int s);
@@ -30,16 +33,18 @@ public:
 	~Brick();
 	void Harm();
 	void Harm(int Damage);
+	void UpdateColor();
 };
 
 class Ball : public BlockyEntity {
-private:
-	static int BallCount;
-	float Speed, Angle;
 public:
+	static int BallCount;
+	float Speed, Theta;
 	Ball();
 	~Ball();
 	void Render();
+	void ReflectX();
+	void ReflectY();
 };
 
 class Paddle : public BlockyEntity {
