@@ -9,10 +9,12 @@
 #include <allegro5/allegro_audio.h>
 #include <allegro5/allegro_acodec.h>
 #include <allegro5/allegro_primitives.h>
-#include "singleton.h"
+#include "main.h"
+
 using namespace std;
 
-const float FPS = 60;
+const float FPS = 60.0;
+const float TICKTIME = 1.0 / FPS;
 const int SCREEN_W = 640;
 const int SCREEN_H = 480;
 const int BALL_SIZE = 16;
@@ -50,7 +52,7 @@ int main(int argc, char **argv)
     float colg = 0;
     float colb = 0;
     int tick = 0;
-    int menu = 1;
+    int menu = 0;
     int high_score = 0;
     bool restart = true;
     int score = 0, multi = 1, final_score = 1;
@@ -86,7 +88,7 @@ int main(int argc, char **argv)
     if(debug) { fprintf(stderr, "Mouse initialized.\n"); }
 
     // create and confirm timer
-    timer = al_create_timer(1.0 / FPS);
+    timer = al_create_timer(TICKTIME);
     if(!timer) {
         fprintf(stderr, "Failed to create timer!\n");
         return -1;
@@ -316,29 +318,33 @@ int main(int argc, char **argv)
             return 0;
         }
         else if(ev.type == ALLEGRO_EVENT_MOUSE_AXES || ev.type == ALLEGRO_EVENT_MOUSE_ENTER_DISPLAY) {
-            // track mouse movement			
-			if(ev.mouse.y < 360) {
-                menu = 1;
-            }
-            else {
-                menu = 0;
-            }
+            // track mouse movement
+			if((ev.mouse.y > 350) && (ev.mouse.y < 388) && (ev.mouse.x > 250) && (ev.mouse.x < 388)) {
+				menu = 1;
+			}
+			else {
+				menu = 0;
+			}
         }
         else if(ev.type == ALLEGRO_EVENT_MOUSE_BUTTON_UP) {
 			// track mouse clicks
-            if(menu == 1) {
-                break;
-            }
-            else {
-                return 0;
-            }
+			if(menu == 1) {
+				break;
+			}
         }
 
         if(redraw && al_is_event_queue_empty(event_queue)) {
 			// process entire queue and only render if the timer has ticked
             redraw = false;
-            al_draw_bitmap(title, (SCREEN_W - al_get_bitmap_width(title) ) / 2, 16, 0);
+            al_clear_to_color(al_map_rgb(0,0,0));
+			al_draw_bitmap(title, (SCREEN_W - al_get_bitmap_width(title) ) / 2, 16, 0);
             al_draw_text(smallfont, al_map_rgb(128,128,0), SCREEN_W / 2, 250, ALLEGRO_ALIGN_CENTRE, "Version 0.1");
+			if(menu == 1) {
+				al_draw_text(medfont, al_map_rgb(128,0,0), SCREEN_W / 2, 350, ALLEGRO_ALIGN_CENTRE, "Play Now!");
+			}
+			else {
+				al_draw_text(medfont, al_map_rgb(128,128,0), SCREEN_W / 2, 350, ALLEGRO_ALIGN_CENTRE, "Play Now!");
+			}
             al_flip_display();
         }
     }
@@ -397,33 +403,7 @@ int main(int argc, char **argv)
                 if(!game_over) {
 					// calculate each ball's new position and check for...
 					for(int i = 0; i < Balls.size(); i++) {
-						// Unencumbered position change
-						DeltaX = cos(Balls[i].Theta) * Balls[i].Speed;
-						DeltaY = sin(Balls[i].Theta) * Balls[i].Speed;
-
-						// See if the new position would collide with any other entity
-
-						// paddle collision
-											
-						// brick collision
-						for(int j = 0; j < Bricks.size(); j++) {
-							if(Balls[i].Collides(Bricks[j].PositionX, Bricks[j].PositionY, Bricks[j].PositionX + Bricks[j].Width, Bricks[j].PositionY + Bricks[j].Height) ) {
-								// reflect and damage block
-								Bricks[j].Harm();
-							}
-						}
-						// move that ball
-						Balls[i].PositionX += DeltaX;
-						Balls[i].PositionY += DeltaY;
-						
-						// decide if ball is lost
-						// ball is lost if it somehow gets off the screen
-						if(Balls[i].PositionX >= 0 && Balls[i].PositionX + Balls[i].Width <= SCREEN_W && Balls[i].PositionY >= 0 && Balls[i].PositionY + Balls[i].Height <= SCREEN_W) {
-							Balls[i].Live = false;
-						}
-						else {
-							score += multi;
-						}
+						Balls[i].Update(TICKTIME);
 					}
 
 					// make sure at least one ball is in play
