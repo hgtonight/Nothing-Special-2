@@ -359,8 +359,11 @@ int main(int argc, char **argv)
 
 		// assume we don't want to play again
         restart = false;
-
-        // TODO: load the right map
+		
+		// StarterBall
+		Ball StarterBall = Ball();
+		        
+		// TODO: load the right map
 
 			// set title
 			// set base speed
@@ -370,11 +373,9 @@ int main(int argc, char **argv)
 		
 		for(int i=0; i < 64; i++) {
 			Brick SingleBlockyEntity = Brick((i % 16) * 40, 80 + ( (i / 16) * 10), i % 8);
-			Bricks.push_back(SingleBlockyEntity);
+			StarterBall.CollidesList.push_back(SingleBlockyEntity);
 		}
 
-		// Start with 1 ball
-		Ball StarterBall = Ball();
 		Balls.push_back(StarterBall);
 
 		// save high score if the final score is higher
@@ -402,8 +403,84 @@ int main(int argc, char **argv)
                 // game logic loop
                 if(!game_over) {
 					// calculate each ball's new position and check for...
+					Path CurrentPath;
 					for(int i = 0; i < Balls.size(); i++) {
-						Balls[i].Update(TICKTIME);
+						CurrentPath = Balls[i].GetPath(TICKTIME);
+
+						// distance traveled in axis directions in time delta t
+						float NX = Balls[i].Position.DeltaX * TICKTIME;
+						float NY = Balls[i].Position.DeltaY * TICKTIME;
+						// new unencombered position
+						float NewPositionX = Balls[i].Position.X + NX;
+						float NewPositionY = Balls[i].Position.Y + NY;
+						ClosestEntity Closest;
+	
+						// look for collisions
+						for(int i = 0; i < (int)Bricks.size(); i++) {
+							// only check items that haven't been hit in the most recent update
+							if (!Bricks[i].HasBeenHit()) {
+								Intersection Point = Bricks[i].PathIntersect(CurrentPath);
+								if (Point.Type == Intersecting) {
+									// mark this hit so we don't check for it again...
+									// until the next update frame.
+									Bricks[i].Hit = true;
+									// see how far the collision is
+									float Magnitude = sqrt(pow(Point.X - Balls[i].Position.X, 2) + pow(Point.Y - Balls[i].Position.Y, 2)); 
+									if (Magnitude <  Closest.Magnitude) {
+										// nab the closest collision so we can handle multiple collisions
+										Closest.Magnitude = Magnitude;
+										Closest.EntityIndex = i;
+										Closest.CollisionPoint = Point;
+									}
+								}
+							}
+						}
+
+						if (Closest.CollisionPoint.Type == Intersecting) {
+							Bricks[Closest.EntityIndex].Harm(1);
+		
+							// TODO: play a sound
+
+							// Update the ball to the point of collision
+							Balls[i].Position.X = Closest.CollisionPoint.X;
+							Balls[i].Position.Y = Closest.CollisionPoint.Y;
+
+							// Reflect the ball in the appropriate direction
+							switch(Closest.CollisionPoint.From) {
+							default:
+							case Top:
+							case Bottom:
+								Balls[i].ReflectY();
+								break;
+							case Left:
+							case Right:
+								Balls[i].ReflectX();
+								break;
+							}
+		
+							// Find the fraction of DeltaT that had to occur before this collision
+							float UnknownT = TICKTIME * (Closest.Magnitude / sqrt(pow(NX,2) + pow(NY, 2)));
+							// simlulate the ball movement after the collision
+							Balls[i].GetPath(TICKTIME - UnknownT);
+							break;
+						}
+
+						if (NewPositionX < 0.0f || NewPositionX > SCREEN_W - Balls[i].Width) {
+							Balls[i].ReflectX();	
+						}
+						if (NewPositionY < 0.0f || NewPositionY > SCREEN_H - Balls[i].Height) {
+							Balls[i].ReflectY();
+						}
+
+	
+						/*if (NewPositionX > 0.0f && NewPositionX < 640 - Width && NewPositionY > 0.0f && NewPositionY < 480 - Height) {
+							Live = true;
+							*/Balls[i].Position.X = NewPositionX;
+							Balls[i].Position.Y = NewPositionY;/*
+						}
+						else {
+							Live = false;
+						}*/
 					}
 
 					// make sure at least one ball is in play
@@ -488,10 +565,10 @@ int main(int argc, char **argv)
                     // blank
                     al_clear_to_color(al_map_rgb(128,128,128));
                     
-					// render each brick
-					for(int i = 0; i < Bricks.size(); i++)
+					// render each collidable entit
+					for(int i = 0; i < Balls[0].CollidesList.size(); i++)
 					{
-						Bricks[i].Render();
+						Balls[0].CollidesList[i].Render();
 					}
 
 					// render each ball
@@ -506,7 +583,6 @@ int main(int argc, char **argv)
 						Paddles[i].Render();
 					}
 					
-
 					// render HUD
 					sprintf (scoretxt, "%d", score);
 					sprintf (multitxt, "%d", multi);

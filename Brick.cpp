@@ -4,29 +4,41 @@ int Brick::BrickCount = 0;
 Brick::Brick() {
 	BrickCount++;
 	Strength = 1;
+	Live = true;
+	Collides = true;
+	Hit = false;
 	UpdateColor();
 }
 Brick::Brick(int x, int y) {
 	BrickCount++;
-	PositionX = x;
-	PositionY = y;
+	Position.X = x;
+	Position.Y = y;
 	Strength = 1;
+	Live = true;
+	Collides = true;
+	Hit = false;
 	UpdateColor();
 }
 Brick::Brick(int x, int y, int s) {
 	BrickCount++;
-	PositionX = x;
-	PositionY = y;
+	Position.X = x;
+	Position.Y = y;
 	Strength = s;
+	Live = true;
+	Collides = true;
+	Hit = false;
 	UpdateColor();
 }
 Brick::Brick(int x, int y, int s, int w, int h) {
 	BrickCount++;
-	PositionX = x;
-	PositionY = y;
+	Position.X = x;
+	Position.Y = y;
 	Width = w;
 	Height = h;
 	Strength = s;
+	Live = true;
+	Collides = true;
+	Hit = false;
 	UpdateColor();
 }
 Brick::~Brick() {

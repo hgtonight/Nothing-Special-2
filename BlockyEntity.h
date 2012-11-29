@@ -3,26 +3,53 @@
 
 #include <allegro5\allegro_primitives.h>
 #include <allegro5\allegro_color.h>
+#include <allegro5\allegro.h>
+
+enum Direction { Top, Bottom, Left, Right };
+enum IntersectType { Parallel, Coincident, NotIntersecting, Intersecting };
+
+struct Path {
+	float X1, X2, Y1, Y2;
+};
+
+struct PositionType {
+	float X, Y, DeltaX, DeltaY;
+};
+
+struct Intersection {
+	float X, Y;
+	Direction From;
+	IntersectType Type;
+};
+
+
 
 class BlockyEntity {
 protected:
 public:
-	int PositionX, PositionY, Width, Height;
+	float Width, Height;
+	PositionType Position;
 	ALLEGRO_COLOR Color;
-	bool Live;
+	bool Live, Collides, Hit;
 
 	BlockyEntity();
-	BlockyEntity(int x, int y, int w, int h, ALLEGRO_COLOR c);
+	BlockyEntity(float x, float y, float w, float h, ALLEGRO_COLOR c);
 	~BlockyEntity();
 	// allow subclasses to override the default Render and Update functions
 	virtual void Render();
-	virtual void Update(float DeltaT);
-	int LineIntersectLine(int x1, int y1, int x2, int y2, int x3, int y3, int x4, int y4);
-	bool Collides(int x, int y);
-	bool Collides(int x, int y, int r);
-	bool Collides(int x1, int y1, int x2, int y2);
+	virtual Path GetPath(float DeltaT);
+	Intersection LineIntersectLine(float x1, float y1, float x2, float y2, float x3, float y3, float x4, float y4);
+	Intersection PathIntersect(Path SentPath);
 	bool IsAlive();
-	void SetPosition(int x, int y);
-	void SetDimensions(int w, int h);
+	bool HasBeenHit();
+	bool HasCollisionBox();
+	void SetPosition(float x, float y);
+	void SetDimensions(float w, float h);
+};
+
+struct ClosestEntity {
+	int EntityIndex;
+	Intersection CollisionPoint;
+	float Magnitude;
 };
 #endif

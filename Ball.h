@@ -8,10 +8,11 @@ class Ball : public BlockyEntity {
 public:
 	static int BallCount;
 	float Speed, Theta;
+	int CollisionDamage;
 	std::vector<BlockyEntity> CollidesList;
 	Ball();
 	~Ball();
-	void Update(float DeltaT);
+	Path GetPath(float DeltaT);
 	void Render();
 	void ReflectX();
 	void ReflectY();
