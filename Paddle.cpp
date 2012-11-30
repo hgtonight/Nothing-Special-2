@@ -1,21 +1,27 @@
 #include "Paddle.h"
 
 Paddle::Paddle(int position) {
-	FixedCoord = position;
 	Rotated = false;
 	Width = 64;
 	Height = 8;
+
+	Position.X = 320;
+	Position.Y = position;
 }
 Paddle::Paddle(int position, bool vertical) {
-	FixedCoord = position;
 	Rotated = vertical;
+	Position.X = 320;
+	Position.Y = 320;
+	
 	if(vertical) {
 		Width = 8;
 		Height = 64;
+		Position.X = position;
 	}
 	else {
 		Width = 64;
 		Height = 8;
+		Position.Y = position;
 	}
 	
 }

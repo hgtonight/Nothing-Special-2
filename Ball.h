@@ -9,7 +9,6 @@ public:
 	static int BallCount;
 	float Speed, Theta;
 	int CollisionDamage;
-	std::vector<BlockyEntity> CollidesList;
 	Ball();
 	~Ball();
 	Path GetPath(float DeltaT);

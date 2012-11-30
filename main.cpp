@@ -360,8 +360,12 @@ int main(int argc, char **argv)
 		// assume we don't want to play again
         restart = false;
 		
-		// StarterBall
+		// Base objects
 		Ball StarterBall = Ball();
+		Paddle StarterPaddle = Paddle(0);
+		Paddle StarterPaddle2 = Paddle(SCREEN_H - 8);
+		Paddle StarterPaddle3 = Paddle(0, true);
+		Paddle StarterPaddle4 = Paddle(SCREEN_W - 8, true);
 		        
 		// TODO: load the right map
 
@@ -369,13 +373,17 @@ int main(int argc, char **argv)
 			// set base speed
 			// create list of block entities
 		
+
+		// Populate entity lists
 		// Remove static data when we get map loading done
-		
 		for(int i=0; i < 64; i++) {
 			Brick SingleBlockyEntity = Brick((i % 16) * 40, 80 + ( (i / 16) * 10), i % 8);
-			StarterBall.CollidesList.push_back(SingleBlockyEntity);
+			Bricks.push_back(SingleBlockyEntity);
 		}
-
+		Paddles.push_back(StarterPaddle);
+		Paddles.push_back(StarterPaddle2);
+		Paddles.push_back(StarterPaddle3);
+		Paddles.push_back(StarterPaddle4);
 		Balls.push_back(StarterBall);
 
 		// save high score if the final score is higher
@@ -414,12 +422,12 @@ int main(int argc, char **argv)
 						float NewPositionX = Balls[i].Position.X + NX;
 						float NewPositionY = Balls[i].Position.Y + NY;
 						ClosestEntity Closest;
-	
+						Closest.Magnitude = 10000;
 						// look for collisions
-						for(int i = 0; i < (int)Bricks.size(); i++) {
+						for(int j = 0; j < (int)Bricks.size(); j++) {
 							// only check items that haven't been hit in the most recent update
-							if (!Bricks[i].HasBeenHit()) {
-								Intersection Point = Bricks[i].PathIntersect(CurrentPath);
+							if (!Bricks[j].HasBeenHit()) {
+								Intersection Point = Bricks[j].PathIntersect(CurrentPath);
 								if (Point.Type == Intersecting) {
 									// mark this hit so we don't check for it again...
 									// until the next update frame.
@@ -429,7 +437,7 @@ int main(int argc, char **argv)
 									if (Magnitude <  Closest.Magnitude) {
 										// nab the closest collision so we can handle multiple collisions
 										Closest.Magnitude = Magnitude;
-										Closest.EntityIndex = i;
+										Closest.EntityIndex = j;
 										Closest.CollisionPoint = Point;
 									}
 								}
@@ -458,29 +466,22 @@ int main(int argc, char **argv)
 								break;
 							}
 		
-							// Find the fraction of DeltaT that had to occur before this collision
+							/*// Find the fraction of DeltaT that had to occur before this collision
 							float UnknownT = TICKTIME * (Closest.Magnitude / sqrt(pow(NX,2) + pow(NY, 2)));
 							// simlulate the ball movement after the collision
 							Balls[i].GetPath(TICKTIME - UnknownT);
-							break;
-						}
-
-						if (NewPositionX < 0.0f || NewPositionX > SCREEN_W - Balls[i].Width) {
-							Balls[i].ReflectX();	
-						}
-						if (NewPositionY < 0.0f || NewPositionY > SCREEN_H - Balls[i].Height) {
-							Balls[i].ReflectY();
+							break;*/
 						}
 
 	
-						/*if (NewPositionX > 0.0f && NewPositionX < 640 - Width && NewPositionY > 0.0f && NewPositionY < 480 - Height) {
+						(NewPositionX > 0.0f && NewPositionX < SCREEN_W - Balls[i].Width && NewPositionY > 0.0f && NewPositionY < SCREEN_H - Balls[i].Height) {
 							Live = true;
-							*/Balls[i].Position.X = NewPositionX;
-							Balls[i].Position.Y = NewPositionY;/*
+							Balls[i].Position.X = NewPositionX;
+							Balls[i].Position.Y = NewPositionY;
 						}
 						else {
 							Live = false;
-						}*/
+						}
 					}
 
 					// make sure at least one ball is in play
@@ -500,26 +501,32 @@ int main(int argc, char **argv)
             else if(ev.type == ALLEGRO_EVENT_MOUSE_AXES || ev.type == ALLEGRO_EVENT_MOUSE_ENTER_DISPLAY) {
                 if(!game_over) {
                     // update each paddle
+					for(int i = 0; i < Paddles.size(); i++) {
 						// horizontal clip
-							/*if(ev.mouse.x < (PADDLE_SIZE / 2) ) {
-								paddle_x = 0;
+						if(Paddles[i].IsHorizontal()) {
+							if(ev.mouse.x < (Paddles[i].Width / 2) ) {
+								Paddles[i].Position.X = 0;
 							}
-							else if(ev.mouse.x > SCREEN_W - (PADDLE_SIZE / 2) ) {
-								paddle_x = SCREEN_W - PADDLE_SIZE;
+							else if(ev.mouse.x > SCREEN_W - (Paddles[i].Width / 2) ) {
+								Paddles[i].Position.X = SCREEN_W - Paddles[i].Width;
 							}
 							else {
-								paddle_x = ev.mouse.x - (PADDLE_SIZE / 2);
-							}*/
+								Paddles[i].Position.X = ev.mouse.x - (Paddles[i].Width / 2);
+							}
+						}
+						else {
 						// vertical clip
-							/*if(ev.mouse.y < (PADDLE_SIZE / 2) ) {
-								paddle_y = 0;
+							if(ev.mouse.y < (Paddles[i].Height / 2) ) {
+								Paddles[i].Position.Y = 0;
 							}
-							else if(ev.mouse.y > SCREEN_H - (PADDLE_SIZE / 2) ) {
-								paddle_y = SCREEN_H - PADDLE_SIZE;
+							else if(ev.mouse.y > SCREEN_H - (Paddles[i].Height / 2) ) {
+								Paddles[i].Position.Y = SCREEN_H - Paddles[i].Height;
 							}
 							else {
-								paddle_y = ev.mouse.y - (PADDLE_SIZE / 2);
-							}*/
+								Paddles[i].Position.Y = ev.mouse.y - (Paddles[i].Height / 2);
+							}
+						}
+					}
                 }
                 else {
                     // track mouse movement for retry menu logic
@@ -565,10 +572,10 @@ int main(int argc, char **argv)
                     // blank
                     al_clear_to_color(al_map_rgb(128,128,128));
                     
-					// render each collidable entit
-					for(int i = 0; i < Balls[0].CollidesList.size(); i++)
+					// render each brick
+					for(int i = 0; i < Bricks.size(); i++)
 					{
-						Balls[0].CollidesList[i].Render();
+						Bricks[i].Render();
 					}
 
 					// render each ball

@@ -64,29 +64,37 @@ Intersection BlockyEntity::LineIntersectLine(float x1, float y1, float x2, float
 			Result.X = x1 + UnknownA * (x2 - x1);
 			Result.Y = y1 + UnknownA * (y2 - y1);
 		}
-		// line segments do not intersect
-		Result.Type = NotIntersecting;
+		else {
+			// line segments do not intersect
+			Result.Type = NotIntersecting;
+		}
 	}
 	return Result;
 }
 Intersection BlockyEntity::PathIntersect(Path SentPath) {
 	Intersection Result;
+	Result.Type = NotIntersecting;
 	
-	if(Position.DeltaY > 0.0f) {
-		Result = LineIntersectLine(SentPath.X1, SentPath.Y1, SentPath.X2, SentPath.Y2, Position.X, Position.Y, Position.X + Width, Position.Y);
-		Result.From = Top;
-	}
-	else {
-		Result = LineIntersectLine(SentPath.X1, SentPath.Y1, SentPath.X2, SentPath.Y2, Position.X, Position.Y + Height, Position.X + Width, Position.Y + Height);
-		Result.From = Bottom;
-	}
+	// check for left/right side collision first
 	if(Position.DeltaX > 0.0f) {
 		Result = LineIntersectLine(SentPath.X1, SentPath.Y1, SentPath.X2, SentPath.Y2, Position.X, Position.Y, Position.X, Position.Y + Height);
 		Result.From = Left;
 	}
-	else {
+	else if(Position.DeltaX < 0.0f) {
 		Result = LineIntersectLine(SentPath.X1, SentPath.Y1, SentPath.X2, SentPath.Y2, Position.X + Width, Position.Y, Position.X + Width, Position.Y + Height);
 		Result.From = Right;
+	}
+
+	// only check for top/bottom collision if it didn't collide left/right
+	if(Result.Type != Intersecting) {
+		if(Position.DeltaY > 0.0f) {
+			Result = LineIntersectLine(SentPath.X1, SentPath.Y1, SentPath.X2, SentPath.Y2, Position.X, Position.Y, Position.X + Width, Position.Y);
+			Result.From = Top;
+		}
+		else if(Position.DeltaY < 0.0f) {
+			Result = LineIntersectLine(SentPath.X1, SentPath.Y1, SentPath.X2, SentPath.Y2, Position.X, Position.Y + Height, Position.X + Width, Position.Y + Height);
+			Result.From = Bottom;
+		}
 	}
 	
 	return Result;
