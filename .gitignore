@@ -1,3 +1,7 @@
+# Debugging directories
+Debug/
+ipch/
+
 # Compiled Object files
 *.slo
 *.lo

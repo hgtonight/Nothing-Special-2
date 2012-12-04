@@ -12,8 +12,8 @@ public:
 	Brick(int x, int y, int s);
 	Brick(int x, int y, int s, int w, int h);
 	~Brick();
-	void Harm();
-	void Harm(int Damage);
+	bool Harm();
+	bool Harm(int Damage);
 	void UpdateColor();
 };
 #endif

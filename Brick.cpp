@@ -44,10 +44,10 @@ Brick::Brick(int x, int y, int s, int w, int h) {
 Brick::~Brick() {
 	BrickCount--;
 }
-void Brick::Harm() {
-	Harm(1);
+bool Brick::Harm() {
+	return Harm(1);
 }
-void Brick::Harm(int Damage) {
+bool Brick::Harm(int Damage) {
 	if(Strength > 0)
 	{
 		Strength -= Damage;
@@ -56,7 +56,9 @@ void Brick::Harm(int Damage) {
 			Live = false;
 		}
 		UpdateColor();
+		return true;
 	}
+	return false;
 }
 void Brick::UpdateColor() {
 	switch(Strength) {
