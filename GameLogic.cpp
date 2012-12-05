@@ -1,6 +1,6 @@
 #include "GameLogic.h"
 
-GameLogic::GameLogic(int ScreenWidth, int ScreenHeight, float FPS = 60) {
+GameLogic::GameLogic(int Width, int Height, float LogicFPS) {
 	Debug = false;
 	
 	Display = NULL;
@@ -15,6 +15,9 @@ GameLogic::GameLogic(int ScreenWidth, int ScreenHeight, float FPS = 60) {
     Sound.HitPaddle = NULL;
     Sound.BackgroundMusic = NULL;
     UserDataFile = NULL;
+	DisplayWidth = Width;
+	DisplayHeight = Height;
+	TimerStep = 1.0 / LogicFPS;
     
 	bool key[2] = { false, false };
     float alpha = 0;
@@ -63,15 +66,15 @@ GameLogic::GameLogic(int ScreenWidth, int ScreenHeight, float FPS = 60) {
             break;
         }
 
-        if(redraw && al_is_EventQueue_empty(EventQueue)) {
+        if(redraw && al_is_event_queue_empty(EventQueue)) {
             redraw = false;
             al_clear_to_color(al_map_rgb_f(colr,colg,colb));
-            al_draw_tinted_bitmap(Bitmap.Logo, al_map_rgba_f(alpha, alpha, alpha, alpha), (ScreenWidth - al_get_bitmap_width(Bitmap.Logo) ) / 2, (ScreenHeight - al_get_bitmap_height(Bitmap.Logo) )/ 2, 0);
-            al_flip_Display();
+            al_draw_tinted_bitmap(Bitmap.Logo, al_map_rgba_f(alpha, alpha, alpha, alpha), (DisplayWidth - al_get_bitmap_width(Bitmap.Logo) ) / 2, (DisplayHeight - al_get_bitmap_height(Bitmap.Logo) )/ 2, 0);
+            al_flip_display();
         }
     }
 
-    al_flip_Display();
+    al_flip_display();
     al_clear_to_color(al_map_rgb(0,0,0));
 
 	// load hiscore info
@@ -119,19 +122,19 @@ GameLogic::GameLogic(int ScreenWidth, int ScreenHeight, float FPS = 60) {
 			}
         }
 
-        if(redraw && al_is_EventQueue_empty(EventQueue)) {
+        if(redraw && al_is_event_queue_empty(EventQueue)) {
 			// process entire queue and only render if the Timer has ticked
             redraw = false;
             al_clear_to_color(al_map_rgb(0,0,0));
-			al_draw_bitmap(Bitmap.Title, (ScreenWidth - al_get_bitmap_width(Bitmap.Title) ) / 2, 16, 0);
-            al_draw_text(Font.Small, al_map_rgb(128,128,0), ScreenWidth / 2, 250, ALLEGRO_ALIGN_CENTRE, "Version 0.1");
+			al_draw_bitmap(Bitmap.Title, (DisplayWidth - al_get_bitmap_width(Bitmap.Title) ) / 2, 16, 0);
+            al_draw_text(Font.Small, al_map_rgb(128,128,0), DisplayWidth / 2, 250, ALLEGRO_ALIGN_CENTRE, "Version 0.1");
 			if(menu == 1) {
-				al_draw_text(Font.Medium, al_map_rgb(128,0,0), ScreenWidth / 2, 350, ALLEGRO_ALIGN_CENTRE, "Play Now!");
+				al_draw_text(Font.Medium, al_map_rgb(128,0,0), DisplayWidth / 2, 350, ALLEGRO_ALIGN_CENTRE, "Play Now!");
 			}
 			else {
-				al_draw_text(Font.Medium, al_map_rgb(128,128,0), ScreenWidth / 2, 350, ALLEGRO_ALIGN_CENTRE, "Play Now!");
+				al_draw_text(Font.Medium, al_map_rgb(128,128,0), DisplayWidth / 2, 350, ALLEGRO_ALIGN_CENTRE, "Play Now!");
 			}
-            al_flip_Display();
+            al_flip_display();
         }
     }
 
@@ -149,9 +152,9 @@ GameLogic::GameLogic(int ScreenWidth, int ScreenHeight, float FPS = 60) {
 		// Base objects
 		Ball StarterBall = Ball();
 		Paddle StarterPaddle = Paddle(0);
-		Paddle StarterPaddle2 = Paddle(ScreenHeight - 8);
+		Paddle StarterPaddle2 = Paddle(DisplayHeight - 8);
 		Paddle StarterPaddle3 = Paddle(0, true);
-		Paddle StarterPaddle4 = Paddle(ScreenWidth - 8, true);
+		Paddle StarterPaddle4 = Paddle(DisplayWidth - 8, true);
 		        
 		// TODO: load the right map
 
@@ -199,11 +202,11 @@ GameLogic::GameLogic(int ScreenWidth, int ScreenHeight, float FPS = 60) {
 					// calculate each ball's new position and check for...
 					Path CurrentPath;
 					for(int i = 0; i < Balls.size(); i++) {
-						CurrentPath = Balls[i].GetPath(TICKTIME);
+						CurrentPath = Balls[i].GetPath(TimerStep);
 
 						// distance traveled in axis directions in time delta t
-						float NX = Balls[i].Position.DeltaX * TICKTIME;
-						float NY = Balls[i].Position.DeltaY * TICKTIME;
+						float NX = Balls[i].Position.DeltaX * TimerStep;
+						float NY = Balls[i].Position.DeltaY * TimerStep;
 						// new unencombered position
 						float NewPositionX = Balls[i].Position.X + NX;
 						float NewPositionY = Balls[i].Position.Y + NY;
@@ -252,15 +255,15 @@ GameLogic::GameLogic(int ScreenWidth, int ScreenHeight, float FPS = 60) {
 								break;
 							}
 		
-							/*// Find the fraction of DeltaT that had to occur before this collision
-							float UnknownT = TICKTIME * (Closest.Magnitude / sqrt(pow(NX,2) + pow(NY, 2)));
+							/* Find the fraction of DeltaT that had to occur before this collision
+							float UnknownT = TimerStep * (Closest.Magnitude / sqrt(pow(NX,2) + pow(NY, 2)));
 							// simlulate the ball movement after the collision
-							Balls[i].GetPath(TICKTIME - UnknownT);
+							Balls[i].GetPath(TimerStep - UnknownT);
 							break;*/
 						}
 
 	
-						if(NewPositionX > 0.0f && NewPositionX < ScreenWidth - Balls[i].Width && NewPositionY > 0.0f && NewPositionY < ScreenHeight - Balls[i].Height) {
+						if(NewPositionX > 0.0f && NewPositionX < DisplayWidth - Balls[i].Width && NewPositionY > 0.0f && NewPositionY < DisplayHeight - Balls[i].Height) {
 							Balls[i].Live = true;
 							Balls[i].Position.X = NewPositionX;
 							Balls[i].Position.Y = NewPositionY;
@@ -273,6 +276,7 @@ GameLogic::GameLogic(int ScreenWidth, int ScreenHeight, float FPS = 60) {
 					// make sure at least one ball is in play
 					if(Balls[0].BallCount < 1) {
 						game_over = true;
+					}
 					}
                 }
                 else {
@@ -293,8 +297,8 @@ GameLogic::GameLogic(int ScreenWidth, int ScreenHeight, float FPS = 60) {
 							if(ev.mouse.x < (Paddles[i].Width / 2) ) {
 								Paddles[i].Position.X = 0;
 							}
-							else if(ev.mouse.x > ScreenWidth - (Paddles[i].Width / 2) ) {
-								Paddles[i].Position.X = ScreenWidth - Paddles[i].Width;
+							else if(ev.mouse.x > DisplayWidth - (Paddles[i].Width / 2) ) {
+								Paddles[i].Position.X = DisplayWidth - Paddles[i].Width;
 							}
 							else {
 								Paddles[i].Position.X = ev.mouse.x - (Paddles[i].Width / 2);
@@ -305,8 +309,8 @@ GameLogic::GameLogic(int ScreenWidth, int ScreenHeight, float FPS = 60) {
 							if(ev.mouse.y < (Paddles[i].Height / 2) ) {
 								Paddles[i].Position.Y = 0;
 							}
-							else if(ev.mouse.y > ScreenHeight - (Paddles[i].Height / 2) ) {
-								Paddles[i].Position.Y = ScreenHeight - Paddles[i].Height;
+							else if(ev.mouse.y > DisplayHeight - (Paddles[i].Height / 2) ) {
+								Paddles[i].Position.Y = DisplayHeight - Paddles[i].Height;
 							}
 							else {
 								Paddles[i].Position.Y = ev.mouse.y - (Paddles[i].Height / 2);
@@ -350,7 +354,7 @@ GameLogic::GameLogic(int ScreenWidth, int ScreenHeight, float FPS = 60) {
                 }
             }
 
-            if(redraw && al_is_EventQueue_empty(EventQueue)) {
+            if(redraw && al_is_event_queue_empty(EventQueue)) {
                 //The render loop
                 redraw = false;
                 if(!game_over) {
@@ -390,7 +394,7 @@ GameLogic::GameLogic(int ScreenWidth, int ScreenHeight, float FPS = 60) {
                     al_clear_to_color(al_map_rgb(128,128,128));
                 }
                 // always flip Display
-                al_flip_Display();
+                al_flip_display();
             }
         }
     }
@@ -409,83 +413,67 @@ GameLogic::GameLogic(int ScreenWidth, int ScreenHeight, float FPS = 60) {
 	// proper cleanup is important!
     al_destroy_bitmap(Bitmap.Title);
     al_destroy_bitmap(Bitmap.Logo);
-    al_destroy_Timer(Timer);
-    al_destroy_Display(Display);
-    al_destroy_EventQueue(EventQueue);
-}
+    al_destroy_timer(Timer);
+    al_destroy_display(Display);
+    al_destroy_event_queue(EventQueue);
 }
 
-bool GameLogic::InitializeAndLoadAssets() {
-	// initialize allegro
-    if(!al_init()) {
+GameLogic::~GameLogic() {
+
+}
+
+bool GameLogic::InitializeAllegro() {
+	if(!al_init()) {
         fprintf(stderr, "Failed to initialize allegro!\n");
         return false;
     }
     if(Debug) { fprintf(stderr, "Allegro 5 initialized.\n"); }
 
-    // install and confirm keyboard
-    if(!al_install_keyboard()) {
+	if(!al_install_keyboard()) {
       fprintf(stderr, "Failed to initialize the keyboard!\n");
       return false;
     }
     if(Debug) { fprintf(stderr, "Keyboard initialized.\n"); }
 
-    // create and confirm mouse
     if(!al_install_mouse()) {
         fprintf(stderr, "Failed to initialize the mouse!\n");
         return false;
     }
     if(Debug) { fprintf(stderr, "Mouse initialized.\n"); }
 
-    // create and confirm Timer
-    Timer = al_create_Timer(TICKTIME);
+    Timer = al_create_timer(TimerStep);
     if(!Timer) {
         fprintf(stderr, "Failed to create Timer!\n");
         return false;
     }
     if(Debug) { fprintf(stderr, "Timer initialized.\n"); }
 
-    // initialize to load images (png)
     if(!al_init_image_addon()) {
         fprintf(stderr, "Failed to initialize images loading!\n");
         return false;
     }
     if(Debug) { fprintf(stderr, "Image loading initialized.\n"); }
 
-	// initialize true type fonts
-    if(!al_init_primitives_addon()) {
+	if(!al_init_primitives_addon()) {
         fprintf(stderr, "Failed to initialize primitives!\n");
         return false;
     }
     if(Debug) { fprintf(stderr, "Primitives addon initialized.\n"); }
 
-    // initialize bitmap fonts
     al_init_font_addon();
 	
-    // initialize true type fonts
     if(!al_init_ttf_addon()) {
         fprintf(stderr, "Failed to initialize TrueType!\n");
         return false;
     }
     if(Debug) { fprintf(stderr, "TTF font loading initialized.\n"); }
-    // actually load the font, I loaded the same font at different sizes.
-    Font.Small = al_load_font("assets/fonts/Geo-Regular.ttf", 24, 0);
-    Font.Medium = al_load_font("assets/fonts/Geo-Regular.ttf", 38, 0);
-    Font.Big = al_load_font("assets/fonts/Geo-Regular.ttf", 70, 0);
-	if(!Font.Small || !Font.Medium || !Font.Big) {
-		fprintf(stderr, "Failed to load fonts!\n");
-        al_destroy_Display(Display);
-        al_destroy_Timer(Timer);
-        return false;
-    }
-    // initialize audio, just WAVs
+    
     if(!al_install_audio()) {
         fprintf(stderr, "Failed to initialize audio!\n");
         return false;
     }
     if(Debug) { fprintf(stderr, "Audio initialized.\n"); }
 
-    // initialize audio codecs like OGG and FLAC
     if(!al_init_acodec_addon()) {
         fprintf(stderr, "Failed to initialize audio codecs!\n");
         return false;
@@ -493,71 +481,100 @@ bool GameLogic::InitializeAndLoadAssets() {
     if(Debug) { fprintf(stderr, "Ogg/FLAC initialized.\n"); }
 
     // create and confirm allegro Display
-    Display = al_create_Display(ScreenWidth, ScreenHeight);
+    Display = al_create_display(DisplayWidth, DisplayHeight);
     if(!Display) {
         fprintf(stderr, "Failed to create Display!\n");
-        al_destroy_Timer(Timer);
         return false;
     }
     if(Debug) { fprintf(stderr, "Display initialized.\n"); }
 
-    // create and confirm Bitmap.Title, ball, and paddle bitmaps
-    Bitmap.Logo = al_load_bitmap("assets/images/daklutz.png");
-    Bitmap.Title = al_load_bitmap("assets/images/Bitmap.Title.png");
-    if(!Bitmap.Title || !Bitmap.Logo) {
-        fprintf(stderr, "Failed to load image files!\n");
-        al_destroy_Display(Display);
-        al_destroy_Timer(Timer);
-        return false;
-    }
-	if(Debug) { fprintf(stderr, "Bitmaps loaded.\n"); }
-    
-	// Make sure we are on the backbuffer
+    // Make sure we are on the backbuffer
     al_set_target_bitmap(al_get_backbuffer(Display));
     
-    Voice = al_create_Voice(44100, ALLEGRO_AUDIO_DEPTH_INT16, ALLEGRO_CHANNEL_CONF_2);
+    Voice = al_create_voice(44100, ALLEGRO_AUDIO_DEPTH_INT16, ALLEGRO_CHANNEL_CONF_2);
     if (!Voice) {
         fprintf(stderr, "Could not create ALLEGRO_VOICE.\n");
         return 1;
     }
     if(Debug) { fprintf(stderr, "Voice created.\n"); }
 
-    Mixer = al_create_Mixer(44100, ALLEGRO_AUDIO_DEPTH_FLOAT32,ALLEGRO_CHANNEL_CONF_2);
+    Mixer = al_create_mixer(44100, ALLEGRO_AUDIO_DEPTH_FLOAT32,ALLEGRO_CHANNEL_CONF_2);
     if (!Mixer) {
         fprintf(stderr, "Could not create ALLEGRO_MIXER.\n");
         return 1;
     }
     if(Debug) { fprintf(stderr, "Mixer created.\n"); }
 
-    if (!al_attach_Mixer_to_Voice(Mixer, Voice)) {
+    if (!al_attach_mixer_to_voice(Mixer, Voice)) {
         fprintf(stderr, "Attaching Mixer to Voice failed.\n");
         return 1;
     }
     if(Debug) { fprintf(stderr, "Mixer attached to Voice.\n"); }
+    
+    // create and confirm event queue
+    EventQueue = al_create_event_queue();
+    if(!EventQueue) {
+        fprintf(stderr, "Failed to create EventQueue!\n");
+        return false;
+    }
+    if(Debug) { fprintf(stderr, "Event queue created successfully.\n"); }
 
-    // create sfx
-    if (!al_reserve_samples(2)) {
+    al_register_event_source(EventQueue, al_get_display_event_source(Display));
+    al_register_event_source(EventQueue, al_get_timer_event_source(Timer));
+    al_register_event_source(EventQueue, al_get_mouse_event_source());
+    al_register_event_source(EventQueue, al_get_keyboard_event_source());
+
+    // blank the Display
+    al_clear_to_color(al_map_rgb(0,0,0));
+    al_flip_display();
+
+	// actually start our Timer
+    al_start_timer(Timer);
+
+	return true;
+}
+
+bool GameLogic::LoadAssets() {
+
+    Bitmap.Logo = al_load_bitmap("assets/images/daklutz.png");
+    Bitmap.Title = al_load_bitmap("assets/images/Bitmap.Title.png");
+    if(!Bitmap.Title || !Bitmap.Logo) {
+        fprintf(stderr, "Failed to load image files!\n");
+        return false;
+    }
+	if(Debug) { fprintf(stderr, "Bitmaps loaded.\n"); }
+
+	// actually load the font, I loaded the same font at different sizes.
+    Font.Small = al_load_font("assets/fonts/Geo-Regular.ttf", 24, 0);
+    Font.Medium = al_load_font("assets/fonts/Geo-Regular.ttf", 38, 0);
+    Font.Big = al_load_font("assets/fonts/Geo-Regular.ttf", 70, 0);
+	if(!Font.Small || !Font.Medium || !Font.Big) {
+		fprintf(stderr, "Failed to load fonts!\n");
+        return false;
+    }
+
+	if (!al_reserve_samples(2)) {
         fprintf(stderr, "Could not reserve samples!\n");
-        return 1;
+        return false;
     }
     if(Debug) { fprintf(stderr, "Samples reserved.\n"); }
 
-    Sound.HitWall = al_load_sample("assets/sounds/wall_collision.ogg");
+	Sound.HitWall = al_load_sample("assets/sounds/wall_collision.ogg");
     Sound.HitPaddle = al_load_sample("assets/sounds/paddle_collision.ogg");
     Sound.BackgroundMusic = al_load_audio_stream("assets/sounds/Sound.BackgroundMusic-tech.ogg", 4, 2048);
     if (!Sound.HitWall || !Sound.HitPaddle || !Sound.BackgroundMusic) {
         fprintf(stderr, "Failed to load sound files!\n");
-        return 1;
+        return false;
     }
-    if(Debug) { fprintf(stderr, "Sound files loaded.\n"); }
+	if(Debug) { fprintf(stderr, "Sound files loaded.\n"); }
 
-    if(!al_attach_audio_stream_to_Mixer(Sound.BackgroundMusic, Mixer) ) {
+	if(!al_attach_audio_stream_to_mixer(Sound.BackgroundMusic, Mixer) ) {
         fprintf(stderr, "Failed to attach stream to default Mixer!\n");
         return 1;
     }
     if(Debug) { fprintf(stderr, "Stream attached to Mixer.\n"); }
 
-    if(!al_set_Mixer_playing(Mixer, true)) {
+    if(!al_set_mixer_playing(Mixer, true)) {
         fprintf(stderr, "Failed to play Mixer!\n");
     }
     if(Debug) { fprintf(stderr, "Mixer playing.\n"); }
@@ -572,29 +589,10 @@ bool GameLogic::InitializeAndLoadAssets() {
     }
     if(Debug) { fprintf(stderr, "Stream playing.\n"); }
 
-    // create and confirm event queue
-    EventQueue = al_create_EventQueue();
-    if(!EventQueue) {
-        fprintf(stderr, "Failed to create EventQueue!\n");
-        al_destroy_bitmap(Bitmap.Title);
-        al_destroy_bitmap(Bitmap.Logo);
-        al_destroy_Display(Display);
-        al_destroy_Timer(Timer);
-        return false;
-    }
-    if(Debug) { fprintf(stderr, "Event queue created successfully.\n"); }
-
-    al_register_event_source(EventQueue, al_get_Display_event_source(Display));
-    al_register_event_source(EventQueue, al_get_Timer_event_source(Timer));
-    al_register_event_source(EventQueue, al_get_mouse_event_source());
-    al_register_event_source(EventQueue, al_get_keyboard_event_source());
-
-    // blank the Display
-    al_clear_to_color(al_map_rgb(0,0,0));
-    al_flip_Display();
-
-	// actually start our Timer
-    al_start_Timer(Timer);
 
 	return true;
+}
+
+void GameLogic::SetDebugMode(bool Verbose) {
+	Debug = Verbose;
 }

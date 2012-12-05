@@ -1,5 +1,7 @@
 #ifndef GAMELOGIC_H
-#define GAMELOGIC_H#include <cmath>
+#define GAMELOGIC_H
+
+#include <cmath>
 #include <vector>
 #include <allegro5/allegro.h>
 #include <allegro5/allegro_image.h>
@@ -37,9 +39,15 @@ struct Bitmaps {
 class GameLogic
 {
 	bool Debug;
+
 	ALLEGRO_DISPLAY *Display;
-    ALLEGRO_EVENT_QUEUE *EventQueue;
-    ALLEGRO_TIMER *Timer;
+    int DisplayWidth;
+	int DisplayHeight;
+	
+	ALLEGRO_TIMER *Timer;
+	float TimerStep;
+	
+	ALLEGRO_EVENT_QUEUE *EventQueue;
     ALLEGRO_VOICE *Voice;
     ALLEGRO_MIXER *Mixer;
     ALLEGRO_FILE *UserDataFile;
@@ -52,9 +60,10 @@ class GameLogic
 	std::vector<Ball> Balls;
 	std::vector<Paddle> Paddles;
 public:
-	GameLogic(int ScreenWidth, int ScreenHeight, float FPS = 60);
+	GameLogic(int Width, int Height, float LogicFPS = 60.0);
 	~GameLogic();
-	bool InitializeAndLoadAssets();
+	bool InitializeAllegro();
+	bool LoadAssets();
 	void SetDebugMode(bool Verbose);
 };
 #endif
